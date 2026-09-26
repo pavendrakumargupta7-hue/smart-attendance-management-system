@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment / Secrets
+.env
+.env.*
+
+# Backup files
+*_backup.py
+*_backup_*.py
+*_before_*.py
+*_backup.db
+app_current.txt
+app_step1_original.py
+
+# Test / Debug files
+check_*.py
+face_*_test.py
+fix_database.py
+
+# Face recognition models
+models/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
