@@ -1,0 +1,844 @@
+ /* =========================================================
+   SAMS — ROLE BASED PREMIUM THEME
+   Student  = Cyan / Blue
+   Teacher  = Purple / Indigo
+   Admin    = Gold / Red
+   ========================================================= */
+
+
+/* =========================================================
+   DEFAULT THEME VARIABLES
+   ========================================================= */
+
+/* =========================================================
+   SAMS — AUTOMATIC ROLE BASED THEME
+   Student  = Cyan / Blue
+   Teacher  = Purple / Indigo
+   Admin    = Gold / Red
+   ========================================================= */
+
+:root {
+    --sams-primary: #337ef5;
+    --sams-secondary: #7334e0;
+    --sams-accent: #07a8c5;
+    --sams-glow: rgba(51, 126, 245, 0.30);
+}
+
+
+/* =========================================================
+   STUDENT THEME
+   ========================================================= */
+
+body.sams-student {
+
+    --sams-primary: #06b6d4;
+    --sams-secondary: #2563eb;
+    --sams-accent: #22d3ee;
+    --sams-glow: rgba(6, 182, 212, 0.30);
+}
+
+
+/* =========================================================
+   TEACHER THEME
+   ========================================================= */
+
+body.sams-teacher {
+
+    --sams-primary: #7c3aed;
+    --sams-secondary: #4f46e5;
+    --sams-accent: #a78bfa;
+    --sams-glow: rgba(124, 58, 237, 0.30);
+}
+
+
+/* =========================================================
+   ADMIN THEME
+   ========================================================= */
+
+body.sams-admin {
+
+    --sams-primary: #f59e0b;
+    --sams-secondary: #dc2626;
+    --sams-accent: #fbbf24;
+    --sams-glow: rgba(245, 158, 11, 0.30);
+}
+
+
+/* =========================================================
+   GLOBAL APPLICATION
+   ========================================================= */
+
+.stApp {
+
+    background:
+        radial-gradient(
+            circle at 5% 5%,
+            var(--sams-glow),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 95% 10%,
+            rgba(168, 85, 247, 0.16),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 50% 100%,
+            rgba(20, 184, 166, 0.12),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #050816 0%,
+            #0b1025 45%,
+            #111827 100%
+        );
+
+    color: #f8fafc;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.main .block-container {
+
+    max-width: 1450px;
+
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+
+    animation:
+        pageEnter
+        0.5s
+        ease;
+}
+
+
+/* =========================================================
+   PAGE ANIMATION
+   ========================================================= */
+
+@keyframes pageEnter {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(10px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* =========================================================
+   HEADINGS
+   ========================================================= */
+
+h1 {
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--sams-primary),
+            var(--sams-accent),
+            var(--sams-secondary)
+        );
+
+    -webkit-background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+
+    font-weight:
+        800 !important;
+}
+
+
+h2 {
+
+    color:
+        #e0e7ff !important;
+
+    font-weight:
+        750 !important;
+}
+
+
+h3 {
+
+    color:
+        var(--sams-accent) !important;
+
+    font-weight:
+        700 !important;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+section[data-testid="stSidebar"] {
+
+    background:
+        linear-gradient(
+            180deg,
+            #050816 0%,
+            #0c1028 50%,
+            #111827 100%
+        );
+
+    border-right:
+        1px solid var(--sams-glow);
+
+    box-shadow:
+        10px 0 35px rgba(0, 0, 0, 0.30);
+}
+
+
+/* =========================================================
+   SIDEBAR TOP COLOR BAR
+   ========================================================= */
+
+section[data-testid="stSidebar"]::before {
+
+    content: "";
+
+    display:
+        block;
+
+    height:
+        5px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--sams-primary),
+            var(--sams-secondary),
+            var(--sams-accent)
+        );
+}
+
+
+/* =========================================================
+   SIDEBAR TEXT
+   ========================================================= */
+
+section[data-testid="stSidebar"] * {
+
+    color:
+        #e5e7eb;
+}
+
+
+/* =========================================================
+   SIDEBAR SELECTBOX
+   ========================================================= */
+
+section[data-testid="stSidebar"]
+div[data-baseweb="select"] {
+
+    background:
+        rgba(30, 41, 59, 0.80);
+
+    border:
+        1px solid var(--sams-glow);
+
+    border-radius:
+        12px;
+}
+
+
+/* =========================================================
+   ALL SELECTBOXES
+   ========================================================= */
+
+div[data-baseweb="select"] {
+
+    border-radius:
+        12px;
+
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+div[data-baseweb="input"],
+div[data-baseweb="textarea"] {
+
+    background:
+        rgba(15, 23, 42, 0.78);
+
+    border:
+        1px solid var(--sams-glow);
+
+    border-radius:
+        12px;
+
+    transition:
+        all 0.2s ease;
+}
+
+
+div[data-baseweb="input"]:focus-within,
+div[data-baseweb="textarea"]:focus-within {
+
+    border-color:
+        var(--sams-primary);
+
+    box-shadow:
+        0 0 0 2px var(--sams-glow);
+}
+
+
+input,
+textarea {
+
+    color:
+        #f8fafc !important;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.stButton > button {
+
+    width:
+        100%;
+
+    border:
+        none;
+
+    border-radius:
+        12px;
+
+    padding:
+        0.65rem 1rem;
+
+    color:
+        white;
+
+    font-weight:
+        700;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--sams-primary),
+            var(--sams-secondary)
+        );
+
+    box-shadow:
+        0 5px 18px var(--sams-glow);
+
+    transition:
+        all 0.2s ease;
+}
+
+
+.stButton > button:hover {
+
+    transform:
+        translateY(-3px);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--sams-accent),
+            var(--sams-primary)
+        );
+
+    box-shadow:
+        0 10px 30px var(--sams-glow);
+
+    color:
+        white;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+   ========================================================= */
+
+.stDownloadButton > button {
+
+    border:
+        none;
+
+    border-radius:
+        12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--sams-accent),
+            var(--sams-primary)
+        );
+
+    color:
+        white;
+
+    font-weight:
+        700;
+}
+
+
+.stDownloadButton > button:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 8px 25px var(--sams-glow);
+}
+
+
+/* =========================================================
+   METRIC CARDS
+   ========================================================= */
+
+div[data-testid="stMetric"] {
+
+    position:
+        relative;
+
+    overflow:
+        hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.90),
+            rgba(15, 23, 42, 0.90)
+        );
+
+    border:
+        1px solid rgba(148, 163, 184, 0.16);
+
+    border-radius:
+        18px;
+
+    padding:
+        20px;
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.25);
+
+    transition:
+        all 0.25s ease;
+}
+
+
+div[data-testid="stMetric"]::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    left:
+        0;
+
+    width:
+        100%;
+
+    height:
+        4px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--sams-primary),
+            var(--sams-secondary),
+            var(--sams-accent)
+        );
+}
+
+
+div[data-testid="stMetric"]:hover {
+
+    transform:
+        translateY(-5px);
+
+    border-color:
+        var(--sams-glow);
+
+    box-shadow:
+        0 15px 40px var(--sams-glow);
+}
+
+
+div[data-testid="stMetricLabel"] {
+
+    color:
+        #94a3b8 !important;
+}
+
+
+div[data-testid="stMetricValue"] {
+
+    color:
+        #f8fafc !important;
+
+    font-weight:
+        800;
+}
+
+
+/* =========================================================
+   EXPANDER
+   ========================================================= */
+
+div[data-testid="stExpander"] {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.80),
+            rgba(15, 23, 42, 0.80)
+        );
+
+    border:
+        1px solid var(--sams-glow);
+
+    border-radius:
+        16px;
+
+    margin-bottom:
+        12px;
+
+    backdrop-filter:
+        blur(10px);
+
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.18);
+
+    transition:
+        all 0.2s ease;
+}
+
+
+div[data-testid="stExpander"]:hover {
+
+    transform:
+        translateY(-1px);
+
+    border-color:
+        var(--sams-primary);
+}
+
+
+/* =========================================================
+   DATA TABLE
+   ========================================================= */
+
+div[data-testid="stDataFrame"] {
+
+    border-radius:
+        16px;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid var(--sams-glow);
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.22);
+}
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+div[data-testid="stAlert"] {
+
+    border-radius:
+        14px;
+
+    backdrop-filter:
+        blur(8px);
+
+    background:
+        rgba(30, 41, 59, 0.72);
+}
+
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+div[data-testid="stForm"] {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.84),
+            rgba(15, 23, 42, 0.84)
+        );
+
+    border:
+        1px solid var(--sams-glow);
+
+    border-radius:
+        20px;
+
+    padding:
+        25px;
+
+    box-shadow:
+        0 15px 45px rgba(0, 0, 0, 0.30);
+}
+
+
+/* =========================================================
+   FILE UPLOADER
+   ========================================================= */
+
+section[data-testid="stFileUploaderDropzone"] {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.75),
+            rgba(15, 23, 42, 0.75)
+        );
+
+    border:
+        2px dashed var(--sams-glow);
+
+    border-radius:
+        16px;
+
+    transition:
+        all 0.2s ease;
+}
+
+
+section[data-testid="stFileUploaderDropzone"]:hover {
+
+    border-color:
+        var(--sams-primary);
+
+    background:
+        var(--sams-glow);
+}
+
+
+/* =========================================================
+   CAMERA
+   ========================================================= */
+
+div[data-testid="stCameraInput"] {
+
+    border:
+        1px solid var(--sams-glow);
+
+    border-radius:
+        18px;
+
+    overflow:
+        hidden;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+button[data-baseweb="tab"] {
+
+    color:
+        #94a3b8 !important;
+
+    font-weight:
+        600 !important;
+}
+
+
+button[data-baseweb="tab"][aria-selected="true"] {
+
+    color:
+        var(--sams-accent) !important;
+}
+
+
+/* =========================================================
+   CHECKBOX
+   ========================================================= */
+
+div[data-testid="stCheckbox"] label {
+
+    color:
+        #cbd5e1 !important;
+}
+
+
+/* =========================================================
+   RADIO
+   ========================================================= */
+
+div[data-testid="stRadio"] label {
+
+    color:
+        #cbd5e1 !important;
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+div[data-testid="stProgressBar"] > div > div {
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--sams-primary),
+            var(--sams-secondary),
+            var(--sams-accent)
+        );
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+
+    color:
+        var(--sams-accent) !important;
+}
+
+
+a:hover {
+
+    color:
+        var(--sams-primary) !important;
+}
+
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+hr {
+
+    border:
+        none;
+
+    border-top:
+        1px solid rgba(148, 163, 184, 0.15);
+
+    margin:
+        1.5rem 0;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+
+    width:
+        9px;
+}
+
+
+::-webkit-scrollbar-track {
+
+    background:
+        #050816;
+}
+
+
+::-webkit-scrollbar-thumb {
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--sams-primary),
+            var(--sams-secondary)
+        );
+
+    border-radius:
+        10px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--sams-accent),
+            var(--sams-primary)
+        );
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .main .block-container {
+
+        padding-left:
+            1rem;
+
+        padding-right:
+            1rem;
+    }
+
+
+    h1 {
+
+        font-size:
+            1.8rem !important;
+    }
+
+
+    h2 {
+
+        font-size:
+            1.5rem !important;
+    }
+
+
+    h3 {
+
+        font-size:
+            1.25rem !important;
+    }
+
+
+    div[data-testid="stMetric"] {
+
+        padding:
+            14px;
+    }
+}

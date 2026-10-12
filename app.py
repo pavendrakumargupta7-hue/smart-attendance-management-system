@@ -1,7 +1,7 @@
 ﻿# Run by PowerShell:
-                # cd "D:\Pavendra\Hello Journey\My Projects\Smart Attendance Management System (SAMS) 31 JULY 26\attendance_system"
-                # py -m py_compile app.py
-                # py -m streamlit run app.py
+    # cd "D:\Pavendra\Hello Journey\My Projects\Smart Attendance Management System (SAMS) 31 JULY 26\attendance_system"
+    # py -m py_compile app.py
+    # py -m streamlit run app.py
 
 
 import streamlit as st
@@ -17,10 +17,12 @@ from datetime import datetime
 
 from math import radians, sin, cos, sqrt, atan2
 
+
 from database import (
     create_database,
     get_connection,
     get_total_classes,
+    save_total_classes,
     DEFAULT_TOTAL_CLASSES
 )
 
@@ -32,6 +34,250 @@ from face_service import (
 )
 
 from face_recognition import verify_face
+from admin.admin_setup import admin_setup
+from admin.admin_login import admin_login
+from admin.admin_dashboard import admin_dashboard
+
+from admin.teacher_management import teacher_management
+from admin.student_management import student_management
+from admin.attendance_management import attendance_management
+from teacher_login import teacher_login
+from teacher_dashboard import teacher_dashboard
+
+# =========================================================
+# SAMS â€” AUTOMATIC ROLE BASED THEME
+# =========================================================
+
+def load_role_based_theme():
+
+    base_dir = os.path.dirname(
+        os.path.abspath(__file__)
+    )
+
+    css_path = os.path.join(
+        base_dir,
+        "static",
+        "style.css"
+    )
+
+    if os.path.exists(css_path):
+
+        with open(
+            css_path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            css = f.read()
+
+        # -------------------------------------------------
+        # DEFAULT STUDENT THEME
+        # -------------------------------------------------
+
+        role_css = """
+        :root {
+
+            --sams-primary: #06b6d4;
+            --sams-secondary: #2563eb;
+            --sams-accent: #22d3ee;
+            --sams-glow: rgba(6, 182, 212, 0.30);
+
+        }
+        """
+
+        # -------------------------------------------------
+        # TEACHER THEME
+        # -------------------------------------------------
+
+        if st.session_state.get(
+            "teacher_logged_in",
+            False
+        ):
+
+            role_css = """
+            :root {
+
+                --sams-primary: #7c3aed;
+                --sams-secondary: #4f46e5;
+                --sams-accent: #a78bfa;
+                --sams-glow: rgba(124, 58, 237, 0.30);
+
+            }
+            """
+
+        # -------------------------------------------------
+        # ADMIN THEME
+        # -------------------------------------------------
+
+        elif st.session_state.get(
+            "admin_logged_in",
+            False
+        ):
+
+            role_css = """
+            :root {
+
+                --sams-primary: #f59e0b;
+                --sams-secondary: #dc2626;
+                --sams-accent: #fbbf24;
+                --sams-glow: rgba(245, 158, 11, 0.30);
+
+            }
+            """
+
+        st.markdown(
+            f"""
+            <style>
+
+            {css}
+
+            {role_css}
+
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+load_role_based_theme()
+
+def app_admin_dashboard():
+
+    if not st.session_state.get(
+        "admin_logged_in",
+        False
+    ):
+        st.warning("ðŸ”’ Please login as Admin first.")
+        return
+
+    st.title("ðŸ‘‘ Admin Dashboard")
+
+    admin_name = st.session_state.get(
+        "admin_name",
+        "Admin"
+    )
+
+    st.success(
+        f"Welcome, {admin_name}!"
+    )
+
+    st.write("---")
+
+    admin_menu = st.selectbox(
+        "Admin Menu",
+        [
+            "Dashboard",
+            "Teacher Management",
+            "Student Management",
+            "Attendance Management"
+        ],
+        key="app_admin_dashboard_menu"
+    )
+
+    if admin_menu == "Dashboard":
+
+        st.subheader("ðŸ“Š Admin Dashboard")
+
+        st.write(
+            "Welcome to the Smart Attendance Management System Admin Panel."
+        )
+
+        st.write("---")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        try:
+
+            # ---------------------------------------------
+            # TOTAL STUDENTS
+            # ---------------------------------------------
+
+            cursor.execute(
+                "SELECT COUNT(*) FROM students"
+            )
+
+            total_students = cursor.fetchone()[0]
+
+            # ---------------------------------------------
+            # TOTAL TEACHERS
+            # ---------------------------------------------
+
+            cursor.execute(
+                "SELECT COUNT(*) FROM teachers"
+            )
+
+            total_teachers = cursor.fetchone()[0]
+
+            # ---------------------------------------------
+            # TOTAL CLASSES
+            # ---------------------------------------------
+
+            cursor.execute(
+                """
+                SELECT COALESCE(
+                    SUM(total_classes),
+                    0
+                )
+                FROM class_schedule
+                """
+            )
+
+            total_classes = cursor.fetchone()[0]
+
+        except sqlite3.Error as e:
+
+            st.error(
+                f"âŒ Database Error: {e}"
+            )
+
+            total_students = 0
+            total_teachers = 0
+            total_classes = 0
+
+        finally:
+
+            conn.close()
+
+        # ---------------------------------------------
+        # DASHBOARD STATISTICS
+        # ---------------------------------------------
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+
+            st.metric(
+                "ðŸ‘¨â€ðŸŽ“ Total Students",
+                total_students
+            )
+
+        with col2:
+
+            st.metric(
+                "ðŸ‘¨â€ðŸ« Total Teachers",
+                total_teachers
+            )
+
+        with col3:
+
+            st.metric(
+                "ðŸ“š Total Classes",
+                total_classes
+            )
+
+    elif admin_menu == "Teacher Management":
+
+        teacher_management()
+
+    elif admin_menu == "Student Management":
+
+        student_management()
+
+    elif admin_menu == "Attendance Management":
+
+        attendance_management()
+
 
 # =========================================================
 # DATABASE
@@ -88,7 +334,7 @@ def get_total_classes(year, month):
 
 st.set_page_config(
     page_title="Smart Attendance Management System",
-    page_icon="📚",
+    page_icon="ðŸ“š",
     layout="wide"
 )
 
@@ -197,7 +443,7 @@ if st.session_state.logged_in:
     if student_menu == "Dashboard":
 
         st.write("---")
-        st.subheader("📍 Location Verification")
+        st.subheader("ðŸ“ Location Verification")
 
         location = streamlit_geolocation()
 
@@ -278,13 +524,13 @@ if st.session_state.logged_in:
                 if distance <= ALLOWED_RADIUS:
 
                     st.success(
-                        "✅ You are inside the attendance area."
+                        "âœ… You are inside the attendance area."
                     )
 
                 else:
 
                     st.error(
-                        "❌ You are outside the attendance area."
+                        "âŒ You are outside the attendance area."
                     )
 
                 # =================================================
@@ -292,7 +538,7 @@ if st.session_state.logged_in:
                 # =================================================
 
                 st.write("---")
-                st.subheader("📝 Mark Attendance")
+                st.subheader("ðŸ“ Mark Attendance")
 
                 if distance <= ALLOWED_RADIUS:
 
@@ -303,7 +549,7 @@ if st.session_state.logged_in:
                     ):
 
                         # =====================================================
-                        # STEP 1 — CHECK FACE REGISTRATION
+                        # STEP 1 â€” CHECK FACE REGISTRATION
                         # =====================================================
 
                         face_conn = get_connection()
@@ -326,7 +572,7 @@ if st.session_state.logged_in:
                         except sqlite3.Error as e:
 
                             st.error(
-                                f"❌ Face profile database error: {e}"
+                                f"âŒ Face profile database error: {e}"
                             )
 
                             face_profile = None
@@ -343,7 +589,7 @@ if st.session_state.logged_in:
                         if face_profile is None:
 
                             st.warning(
-                                "⚠️ Your face is not registered."
+                                "âš ï¸ Your face is not registered."
                             )
 
                             st.info(
@@ -359,7 +605,7 @@ if st.session_state.logged_in:
                         else:
 
                             st.info(
-                                "📷 Face verification required."
+                                "ðŸ“· Face verification required."
                             )
 
                             st.write(
@@ -384,7 +630,7 @@ if st.session_state.logged_in:
                             if not face_matched:
 
                                 st.error(
-                                    "❌ Face verification failed."
+                                    "âŒ Face verification failed."
                                 )
 
                                 st.warning(
@@ -398,7 +644,7 @@ if st.session_state.logged_in:
                                     )
 
                                 st.error(
-                                    "🚫 Attendance has NOT been marked."
+                                    "ðŸš« Attendance has NOT been marked."
                                 )
 
 
@@ -409,7 +655,7 @@ if st.session_state.logged_in:
                             else:
 
                                 st.success(
-                                    "✅ Face verification successful."
+                                    "âœ… Face verification successful."
                                 )
 
                                 st.info(
@@ -440,106 +686,161 @@ if st.session_state.logged_in:
 
                                     cursor = conn.cursor()
 
-
                                     # -----------------------------------------
-                                    # CHECK DUPLICATE ATTENDANCE
+                                    # CHECK CLASS ATTENDANCE STATUS
                                     # -----------------------------------------
 
                                     cursor.execute(
                                         """
-                                        SELECT id
-                                        FROM attendance
-                                        WHERE student_id = ?
-                                        AND date = ?
-                                        """,
+                                        CREATE TABLE IF NOT EXISTS class_control
                                         (
-                                            st.session_state.user_id,
-                                            current_date
+                                            id INTEGER PRIMARY KEY,
+                                            attendance_open INTEGER DEFAULT 1
                                         )
+                                        """
                                     )
 
-                                    record = cursor.fetchone()
+                                    cursor.execute(
+                                        """
+                                        SELECT attendance_open
+                                        FROM class_control
+                                        WHERE id = 1
+                                        """
+                                    )
 
+                                    class_status = cursor.fetchone()
 
-                                    if record:
-
-                                        st.warning(
-                                            "⚠️ Attendance already marked today!"
-                                        )
-
-
-                                    else:
-
-                                        # -------------------------------------
-                                        # INSERT ATTENDANCE
-                                        # -------------------------------------
+                                    if class_status is None:
 
                                         cursor.execute(
                                             """
-                                            INSERT INTO attendance
+                                            INSERT INTO class_control
                                             (
-                                                student_id,
-                                                date,
-                                                time,
-                                                status,
-                                                latitude,
-                                                longitude,
-                                                distance
+                                                id,
+                                                attendance_open
                                             )
-                                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                                            VALUES (?, ?)
                                             """,
-                                            (
-                                                st.session_state.user_id,
-                                                current_date,
-                                                current_time,
-                                                "Present",
-                                                latitude,
-                                                longitude,
-                                                distance
-                                            )
+                                            (1, 1)
                                         )
 
                                         conn.commit()
 
+                                        attendance_open = True
 
-                                        # -------------------------------------
-                                        # SUCCESS
-                                        # -------------------------------------
+                                    else:
 
-                                        st.success(
-                                            "✅ Attendance Marked Successfully!"
+                                        attendance_open = bool(
+                                            class_status[0]
                                         )
 
-                                        st.info(
-                                            f"Time: {current_time}"
+                                    # -----------------------------------------
+                                    # BLOCK ATTENDANCE IF CLASSES ARE CLOSED
+                                    # -----------------------------------------
+
+                                    if not attendance_open:
+
+                                        st.error(
+                                            "ðŸ”’ Classes are currently closed. "
+                                            "You cannot mark attendance."
                                         )
 
-                                        st.info(
-                                            f"Distance: {distance:.2f} meters"
+                                    else:
+
+                                        # -----------------------------------------
+                                        # CHECK DUPLICATE ATTENDANCE
+                                        # -----------------------------------------
+
+                                        cursor.execute(
+                                            """
+                                            SELECT id
+                                            FROM attendance
+                                            WHERE student_id = ?
+                                            AND date = ?
+                                            """,
+                                            (
+                                                st.session_state.user_id,
+                                                current_date
+                                            )
                                         )
 
-                                        st.info(
-                                            f"Face Similarity: {similarity:.4f}"
-                                        )
+                                        record = cursor.fetchone()
 
+                                        if record:
+
+                                            st.warning(
+                                                "âš ï¸ Attendance already marked today!"
+                                            )
+
+                                        else:
+
+                                            # -------------------------------------
+                                            # INSERT ATTENDANCE
+                                            # -------------------------------------
+
+                                            cursor.execute(
+                                                """
+                                                INSERT INTO attendance
+                                                (
+                                                    student_id,
+                                                    date,
+                                                    time,
+                                                    status,
+                                                    latitude,
+                                                    longitude,
+                                                    distance
+                                                )
+                                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                                                """,
+                                                (
+                                                    st.session_state.user_id,
+                                                    current_date,
+                                                    current_time,
+                                                    "Present",
+                                                    latitude,
+                                                    longitude,
+                                                    distance
+                                                )
+                                            )
+
+                                            conn.commit()
+
+                                            # -------------------------------------
+                                            # SUCCESS
+                                            # -------------------------------------
+
+                                            st.success(
+                                                "âœ… Attendance Marked Successfully!"
+                                            )
+
+                                            st.info(
+                                                f"Time: {current_time}"
+                                            )
+
+                                            st.info(
+                                                f"Distance: {distance:.2f} meters"
+                                            )
+
+                                            st.info(
+                                                f"Face Similarity: {similarity:.4f}"
+                                            )
 
                                 except sqlite3.Error as e:
 
                                     conn.rollback()
 
                                     st.error(
-                                        f"❌ Database Error: {e}"
+                                        f"âŒ Database Error: {e}"
                                     )
 
                                 finally:
 
                                     conn.close()
 
-
                     else:
 
                         st.error(
-                            f"❌ You are outside the attendance area. "
+                            f"âŒ You are outside the attendance area. "
                             f"Distance: {distance:.2f} meters"
                         )
 
@@ -550,7 +851,7 @@ if st.session_state.logged_in:
     elif student_menu == "Attendance History":
 
         st.write("---")
-        st.subheader("📋 My Attendance History")
+        st.subheader("ðŸ“‹ My Attendance History")
 
         conn = get_connection()
 
@@ -579,7 +880,7 @@ if st.session_state.logged_in:
         except sqlite3.Error as e:
 
             st.error(
-                f"❌ Database Error: {e}"
+                f"âŒ Database Error: {e}"
             )
 
             records = []
@@ -621,7 +922,7 @@ if st.session_state.logged_in:
     st.write("---")
 
     if st.button(
-        "🚪 Logout",
+        "ðŸšª Logout",
         key="student_logout"
     ):
 
@@ -645,9 +946,8 @@ else:
         "Register",
         "Login",
         "Teacher Login",
-        "Teacher Dashboard"
+        "Admin"
     ]
-
 
     # =====================================================
     # TEACHER ALREADY LOGGED IN
@@ -658,7 +958,7 @@ else:
         st.sidebar.success(
             f"Teacher: {st.session_state.teacher_name.replace(' Teacher', '')} Sir"
         )
-        
+
         choice = "Teacher Dashboard"
 
     else:
@@ -676,7 +976,7 @@ else:
 
     if choice == "Register":
 
-        st.subheader("👨‍🎓 Student Registration")
+        st.subheader("ðŸ‘¨â€ðŸŽ“ Student Registration")
 
         name = st.text_input(
             "Name",
@@ -730,7 +1030,7 @@ else:
                     conn.commit()
 
                     st.success(
-                        "✅ Registration Successful!"
+                        "âœ… Registration Successful!"
                     )
 
                 except sqlite3.IntegrityError:
@@ -742,7 +1042,7 @@ else:
                 except sqlite3.Error as e:
 
                     st.error(
-                        f"❌ Database Error: {e}"
+                        f"âŒ Database Error: {e}"
                     )
 
                 finally:
@@ -756,7 +1056,7 @@ else:
 
     elif choice == "Login":
 
-        st.subheader("🔐 Student Login")
+        st.subheader("ðŸ” Student Login")
 
         email = st.text_input(
             "Email",
@@ -799,7 +1099,7 @@ else:
             except sqlite3.Error as e:
 
                 st.error(
-                    f"❌ Database Error: {e}"
+                    f"âŒ Database Error: {e}"
                 )
 
                 user = None
@@ -819,9 +1119,8 @@ else:
             else:
 
                 st.error(
-                    "❌ Invalid Email or Password"
+                    "âŒ Invalid Email or Password"
                 )
-
 
     # =====================================================
     # TEACHER LOGIN
@@ -829,80 +1128,55 @@ else:
 
     elif choice == "Teacher Login":
 
-        st.subheader("👨‍🏫 Teacher Login")
+        teacher_login()
 
-        teacher_email = st.text_input(
-            "Teacher Email",
-            key="teacher_login_email"
-        )
+    # =====================================================
+    # ADMIN
+    # =====================================================
 
-        teacher_password = st.text_input(
-            "Teacher Password",
-            type="password",
-            key="teacher_login_password"
-        )
+    elif choice == "Admin":
 
-        if st.button(
-            "Teacher Login",
-            type="primary",
-            key="teacher_login_button"
+        # =================================================
+        # ADMIN ALREADY LOGGED IN
+        # =================================================
+
+        if st.session_state.get(
+            "admin_logged_in",
+            False
         ):
 
-            if not teacher_email or not teacher_password:
+            admin_dashboard()
 
-                st.warning(
-                    "Please enter email and password."
-                )
+        else:
 
-            else:
+            # =============================================
+            # ADMIN MENU
+            # =============================================
 
-                conn = get_connection()
+            admin_menu = st.selectbox(
+                "Admin Menu",
+                [
+                    "Admin Setup",
+                    "Admin Login"
+                ],
+                key="admin_main_menu"
+            )
 
-                try:
+            # =============================================
+            # ADMIN SETUP
+            # =============================================
 
-                    cursor = conn.cursor()
+            if admin_menu == "Admin Setup":
 
-                    cursor.execute(
-                        """
-                        SELECT id, name
-                        FROM teachers
-                        WHERE LOWER(TRIM(email)) = ?
-                        AND password = ?
-                        """,
-                        (
-                            teacher_email.strip().lower(),
-                            teacher_password.strip()
-                        )
-                    )
+                admin_setup()
 
-                    teacher = cursor.fetchone()
+            # =============================================
+            # ADMIN LOGIN
+            # =============================================
 
-                except sqlite3.Error as e:
+            elif admin_menu == "Admin Login":
 
-                    st.error(
-                        f"❌ Database Error: {e}"
-                    )
-
-                    teacher = None
-
-                finally:
-
-                    conn.close()
-
-                if teacher:
-
-                    st.session_state.teacher_logged_in = True
-                    st.session_state.teacher_id = teacher[0]
-                    st.session_state.teacher_name = teacher[1]
-
-                    st.rerun()
-
-                else:
-
-                    st.error(
-                        "❌ Invalid Teacher Email or Password"
-                    )
-
+                admin_login()
 
     # =====================================================
     # TEACHER DASHBOARD
@@ -917,13 +1191,13 @@ else:
         teacher_menu = st.sidebar.selectbox(
         "Teacher Menu",
         [
-            "🏠 Dashboard",
-            "👨‍🎓 Student Management",
-            "📅 Attendance",
-            "⚙️ Class Settings",
-            "📊 Reports",
-            "📈 Analytics",
-            "📥 Export"
+            "ðŸ  Dashboard",
+            "ðŸ‘¨â€ðŸŽ“ Student Management",
+            "ðŸ“… Attendance",
+            "âš™ï¸ Class Settings",
+            "ðŸ“Š Reports",
+            "ðŸ“ˆ Analytics",
+            "ðŸ“¥ Export"
         ],
         key="teacher_menu"
         )
@@ -934,7 +1208,7 @@ else:
         # =================================================
 
         st.subheader(
-            f"👨‍🏫 Welcome {st.session_state.teacher_name.replace(' Teacher', '')} Sir"
+            f"ðŸ‘¨â€ðŸ« Welcome {st.session_state.teacher_name.replace(' Teacher', '')} Sir"
         )
 
         st.write("---")
@@ -955,9 +1229,9 @@ else:
             # DASHBOARD
             # =================================================
 
-            if teacher_menu == "🏠 Dashboard":
+            if teacher_menu == "ðŸ  Dashboard":
 
-                st.subheader("🏠 Teacher Dashboard")
+                st.subheader("ðŸ  Teacher Dashboard")
 
 
                 # ---------------------------------------------
@@ -1032,7 +1306,7 @@ else:
                 # ---------------------------------------------
 
                 st.subheader(
-                    "📊 Today's Statistics"
+                    "ðŸ“Š Today's Statistics"
                 )
 
                 col1, col2, col3, col4, col5 = st.columns(5)
@@ -1087,7 +1361,7 @@ else:
                 st.write("---")
 
                 st.subheader(
-                    "📅 Today's Attendance"
+                    "ðŸ“… Today's Attendance"
                 )
 
                 cursor.execute(
@@ -1138,10 +1412,10 @@ else:
             # STUDENT MANAGEMENT
             # =================================================
 
-            elif teacher_menu == "👨‍🎓 Student Management":
+            elif teacher_menu == "ðŸ‘¨â€ðŸŽ“ Student Management":
 
                 st.subheader(
-                    "👨‍🎓 Student Management"
+                    "ðŸ‘¨â€ðŸŽ“ Student Management"
                 )
 
 
@@ -1152,7 +1426,7 @@ else:
                 st.write("---")
 
                 st.subheader(
-                    "🔎 Search Student"
+                    "ðŸ”Ž Search Student"
                 )
 
                 search_name = st.text_input(
@@ -1203,7 +1477,7 @@ else:
                     else:
 
                         st.warning(
-                            "⚠️ No matching student found."
+                            "âš ï¸ No matching student found."
                         )
 
 
@@ -1214,7 +1488,7 @@ else:
                 st.write("---")
 
                 st.subheader(
-                    "👨‍🎓 All Registered Students"
+                    "ðŸ‘¨â€ðŸŽ“ All Registered Students"
                 )
 
                 cursor.execute(
@@ -1258,7 +1532,7 @@ else:
                     # =================================================
 
                     st.write("---")
-                    st.subheader("✏️ Edit Student")
+                    st.subheader("âœï¸ Edit Student")
 
                     if students_list:
 
@@ -1314,7 +1588,7 @@ else:
                             # ---------------------------------------------
 
                             if st.button(
-                                "💾 Update Student",
+                                "ðŸ’¾ Update Student",
                                 type="primary",
                                 key="update_student_button"
                             ):
@@ -1325,7 +1599,7 @@ else:
                                 if not new_name or not new_email:
 
                                     st.warning(
-                                        "⚠️ Name and Email cannot be empty."
+                                        "âš ï¸ Name and Email cannot be empty."
                                     )
 
                                 else:
@@ -1349,7 +1623,7 @@ else:
                                         conn.commit()
 
                                         st.success(
-                                            "✅ Student details updated successfully."
+                                            "âœ… Student details updated successfully."
                                         )
 
                                         st.rerun()
@@ -1357,7 +1631,7 @@ else:
                                     except sqlite3.IntegrityError:
 
                                         st.error(
-                                            "❌ This email is already registered "
+                                            "âŒ This email is already registered "
                                             "with another student."
                                         )
 
@@ -1366,7 +1640,7 @@ else:
                                         conn.rollback()
 
                                         st.error(
-                                            f"❌ Database Error: {e}"
+                                            f"âŒ Database Error: {e}"
                                         )
 
                     else:
@@ -1380,7 +1654,7 @@ else:
                     # =================================================
 
                     st.write("---")
-                    st.subheader("👤 Student Profile")
+                    st.subheader("ðŸ‘¤ Student Profile")
 
                     if students_list:
 
@@ -1424,7 +1698,7 @@ else:
                             student_email = profile_student[2]
 
                             st.write("---")
-                            st.subheader("📋 Student Information")
+                            st.subheader("ðŸ“‹ Student Information")
 
                             col1, col2, col3 = st.columns(3)
 
@@ -1512,7 +1786,7 @@ else:
                             # -------------------------------------------------
 
                             st.write("---")
-                            st.subheader("📊 Attendance Statistics")
+                            st.subheader("ðŸ“Š Attendance Statistics")
 
                             col1, col2, col3 = st.columns(3)
 
@@ -1546,7 +1820,7 @@ else:
                             # =================================================
 
                             st.write("---")
-                            st.subheader("📅 Attendance History")
+                            st.subheader("ðŸ“… Attendance History")
 
                             cursor.execute(
                                 """
@@ -1617,7 +1891,7 @@ else:
                     # =================================================
 
                     st.write("---")
-                    st.subheader("📸 Register Student Face")
+                    st.subheader("ðŸ“¸ Register Student Face")
 
                     face_student_options = {
                         f"{student[1]} (ID: {student[0]})":
@@ -1681,7 +1955,7 @@ else:
                         if existing_face:
 
                             st.success(
-                                "✅ Face is already registered "
+                                "âœ… Face is already registered "
                                 "for this student."
                             )
 
@@ -1691,62 +1965,46 @@ else:
                             )
 
                             st.warning(
-                                "⚠️ Capturing a new face will "
+                                "âš ï¸ Capturing a new face will "
                                 "replace the existing face registration."
                             )
 
                         else:
 
                             st.warning(
-                                "⚠️ Face is not registered "
+                                "âš ï¸ Face is not registered "
                                 "for this student."
                             )
-
-                        # -------------------------------------------------
-                        # OPEN CAMERA BUTTON
-                        # -------------------------------------------------
-
-                        if st.button(
-                            "📸 Open Camera",
-                            type="primary",
-                            key="open_student_face_button"
-                        ):
-                            st.session_state["face_camera_open"] = True
-
                         # -------------------------------------------------
                         # CAMERA
                         # -------------------------------------------------
 
                         camera_image = None
 
-                        if st.session_state.get("face_camera_open", False):
+                        if st.button(
+                            "ðŸ“· Open Camera",
+                            key="open_student_face_camera_button"
+                        ):
+                            st.session_state.open_student_face_camera = True
+
+                        if "open_student_face_camera" not in st.session_state:
+                            st.session_state.open_student_face_camera = False
+
+                        if st.session_state.open_student_face_camera:
 
                             camera_image = st.camera_input(
-                                "📷 Take Student Face Photo",
+                                "ðŸ“· Take Student Face Photo",
                                 key="student_face_camera",
                                 resolution="720p"
                             )
-
-                        if camera_image:
-
-                            st.image(
-                                camera_image,
-                                caption="Captured Student Face",
-                                width=350
-                            )
-
-                            # -------------------------------------------------
-                            # REGISTER BUTTON
-                            # -------------------------------------------------
-
                             if st.button(
-                                "💾 Register Face",
+                                "ðŸ’¾ Register Face",
                                 type="primary",
                                 key="save_student_face_button"
                             ):
 
                                 with st.spinner(
-                                    "🔄 Detecting face and creating embedding..."
+                                    "ðŸ”„ Detecting face and creating embedding..."
                                 ):
 
                                     embedding, message = (
@@ -1762,7 +2020,7 @@ else:
                                 if embedding is None:
 
                                     st.error(
-                                        f"❌ {message}"
+                                        f"âŒ {message}"
                                     )
 
                                 # -------------------------------------------------
@@ -1772,11 +2030,11 @@ else:
                                 else:
 
                                     st.success(
-                                        f"✅ {message}"
+                                        f"âœ… {message}"
                                     )
 
                                     with st.spinner(
-                                        "💾 Saving face registration..."
+                                        "ðŸ’¾ Saving face registration..."
                                     ):
 
                                         success, save_message = (
@@ -1789,7 +2047,7 @@ else:
                                     if success:
 
                                         st.success(
-                                            f"✅ {save_message}"
+                                            f"âœ… {save_message}"
                                         )
 
                                         st.info(
@@ -1804,9 +2062,9 @@ else:
                                     else:
 
                                         st.error(
-                                            f"❌ {save_message}"
+                                            f"âŒ {save_message}"
                                         )
-                                        
+
                     # -----------------------------------------
                     # REMOVE STUDENT
                     # -----------------------------------------
@@ -1814,7 +2072,7 @@ else:
                     st.write("---")
 
                     st.subheader(
-                        "🗑️ Remove Student"
+                        "ðŸ—‘ï¸ Remove Student"
                     )
 
                     student_options = {
@@ -1834,7 +2092,7 @@ else:
                     ]
 
                     st.warning(
-                        "⚠️ Removing a student will also "
+                        "âš ï¸ Removing a student will also "
                         "remove all attendance records "
                         "of that student."
                     )
@@ -1845,7 +2103,7 @@ else:
                     )
 
                     if st.button(
-                        "🗑️ Remove Selected Student",
+                        "ðŸ—‘ï¸ Remove Selected Student",
                         type="secondary",
                         key="remove_student_button"
                     ):
@@ -1853,7 +2111,7 @@ else:
                         if not confirm_delete:
 
                             st.error(
-                                "❌ Please confirm the deletion first."
+                                "âŒ Please confirm the deletion first."
                             )
 
                         else:
@@ -1936,7 +2194,7 @@ else:
                                 ):
 
                                     st.success(
-                                        "✅ Student removed successfully."
+                                        "âœ… Student removed successfully."
                                     )
 
                                     st.info(
@@ -1950,7 +2208,7 @@ else:
                                 else:
 
                                     st.error(
-                                        "❌ Student deletion could not be verified."
+                                        "âŒ Student deletion could not be verified."
                                     )
 
                             except sqlite3.Error as e:
@@ -1958,7 +2216,7 @@ else:
                                 conn.rollback()
 
                                 st.error(
-                                    f"❌ Database Error: {e}"
+                                    f"âŒ Database Error: {e}"
                                 )
 
                                 # =================================================
@@ -1966,7 +2224,7 @@ else:
                                 # =================================================
 
                                 st.write("---")
-                                st.subheader("✏️ Edit Student")
+                                st.subheader("âœï¸ Edit Student")
 
                                 if students_list:
 
@@ -2032,7 +2290,7 @@ else:
                                             )
 
                                             update_student = st.form_submit_button(
-                                                "💾 Update Student",
+                                                "ðŸ’¾ Update Student",
                                                 type="primary"
                                             )
 
@@ -2044,7 +2302,7 @@ else:
                                                 if not new_name or not new_email:
 
                                                     st.warning(
-                                                        "⚠️ Name and Email cannot be empty."
+                                                        "âš ï¸ Name and Email cannot be empty."
                                                     )
 
                                                 else:
@@ -2094,7 +2352,7 @@ else:
                                                         conn.commit()
 
                                                         st.success(
-                                                            "✅ Student details updated successfully."
+                                                            "âœ… Student details updated successfully."
                                                         )
 
                                                         st.rerun()
@@ -2104,7 +2362,7 @@ else:
                                                         conn.rollback()
 
                                                         st.error(
-                                                            "❌ This email is already registered "
+                                                            "âŒ This email is already registered "
                                                             "with another student."
                                                         )
 
@@ -2113,7 +2371,7 @@ else:
                                                         conn.rollback()
 
                                                         st.error(
-                                                            f"❌ Database Error: {e}"
+                                                            f"âŒ Database Error: {e}"
                                                         )
 
                                 else:
@@ -2130,7 +2388,7 @@ else:
                                 conn.rollback()
 
                                 st.error(
-                                    f"❌ Database Error: {e}"
+                                    f"âŒ Database Error: {e}"
                                 )
 
 
@@ -2145,10 +2403,10 @@ else:
             # ATTENDANCE
             # =================================================
 
-            elif teacher_menu == "📅 Attendance":
+            elif teacher_menu == "ðŸ“… Attendance":
 
                 st.subheader(
-                    "📅 Attendance Management"
+                    "ðŸ“… Attendance Management"
                 )
 
 
@@ -2159,7 +2417,7 @@ else:
                 st.write("---")
 
                 st.subheader(
-                    "📅 Today's Attendance"
+                    "ðŸ“… Today's Attendance"
                 )
 
                 today = datetime.now().strftime(
@@ -2223,7 +2481,7 @@ else:
                 st.write("---")
 
                 st.subheader(
-                    "📅 Date-wise Attendance"
+                    "ðŸ“… Date-wise Attendance"
                 )
 
 
@@ -2299,7 +2557,7 @@ else:
                 # =================================================
 
                 st.write("---")
-                st.subheader("🔎 Filter Attendance")
+                st.subheader("ðŸ”Ž Filter Attendance")
 
                 # =================================================
                 # FILTER INPUTS
@@ -2461,7 +2719,7 @@ else:
                     ).encode("utf-8")
 
                     st.download_button(
-                        label="⬇️ Download Filtered Attendance",
+                        label="â¬‡ï¸ Download Filtered Attendance",
                         data=filtered_csv,
                         file_name="filtered_attendance.csv",
                         mime="text/csv",
@@ -2474,7 +2732,7 @@ else:
                         "No attendance records match the selected filters."
                     )
 
-                        
+
                     # =========================================================
                     # ATTENDANCE MONTH / YEAR FILTER
                     # =========================================================
@@ -2707,9 +2965,9 @@ else:
             # ATTENDANCE REPORT
             # =========================================================
 
-            elif teacher_menu == "📊 Reports":
+            elif teacher_menu == "ðŸ“Š Reports":
 
-                st.subheader("📊 Attendance Report")
+                st.subheader("ðŸ“Š Attendance Report")
                 st.write("---")
 
                 current_date = datetime.now()
@@ -2858,6 +3116,46 @@ else:
                             "Attendance %"
                         ]
                     )
+                    # -------------------------------------------------
+                    # LOW ATTENDANCE ALERT
+                    # -------------------------------------------------
+
+                    low_attendance_df = report_df[
+                        report_df["Attendance %"] < 70
+                    ]
+
+                    st.write("---")
+
+                    st.subheader(
+                        "âš ï¸ Low Attendance Alert"
+                    )
+
+                    if not low_attendance_df.empty:
+
+                        st.warning(
+                            f"âš ï¸ {len(low_attendance_df)} student(s) "
+                            "have attendance below 70%."
+                        )
+
+                        st.dataframe(
+                            low_attendance_df[
+                                [
+                                    "Student Name",
+                                    "Email",
+                                    "Present",
+                                    "Total Classes",
+                                    "Attendance %"
+                                ]
+                            ],
+                            use_container_width=True,
+                            hide_index=True
+                        )
+
+                    else:
+
+                        st.success(
+                            "âœ… No student has attendance below 70%."
+                        )
 
                     st.dataframe(
                         report_df,
@@ -2871,14 +3169,14 @@ else:
 
                     st.write("---")
 
-                    st.subheader("📥 Export Attendance Report")
+                    st.subheader("ðŸ“¥ Export Attendance Report")
 
                     csv_data = report_df.to_csv(
                         index=False
                     ).encode("utf-8")
 
                     st.download_button(
-                        label="📥 Download CSV Report",
+                        label="ðŸ“¥ Download CSV Report",
                         data=csv_data,
                         file_name=(
                             f"Attendance_Report_"
@@ -2895,19 +3193,122 @@ else:
                     )
 
 
-
             # =========================================================
             # CLASS SETTINGS
             # =========================================================
 
-            elif teacher_menu == "⚙️ Class Settings":
+            elif teacher_menu == "âš™ï¸ Class Settings":
 
-                st.subheader("⚙️ Class Settings")
+                st.subheader("âš™ï¸ Class Settings")
                 st.write("---")
 
                 st.info(
-                    "Set the total number of classes conducted for a particular month."
+                    "Manage the total number of classes and control whether "
+                    "student attendance is currently open or closed."
                 )
+
+                st.write("---")
+
+                st.subheader("ðŸ” Teacher Account")
+
+                if st.button(
+                    "ðŸšª Teacher Logout",
+                    key="teacher_logout_class_settings",
+                    type="primary"
+                ):
+                    st.session_state.teacher_logged_in = False
+                    st.session_state.teacher_id = None
+                    st.session_state.teacher_name = None
+                    st.rerun()
+                # ---------------------------------------------------------
+                # CLASS STATUS
+                # ---------------------------------------------------------
+
+                if "classes_attendance_open" not in st.session_state:
+                    st.session_state.classes_attendance_open = True
+
+                st.subheader("ðŸ“… Class Attendance Status")
+
+                if st.session_state.classes_attendance_open:
+
+                    st.success(
+                        "ðŸŸ¢ Attendance is OPEN. Students can mark their attendance."
+                    )
+
+                    if st.button(
+                        "ðŸ”’ Close Classes",
+                        key="close_classes_button"
+                    ):
+                        st.session_state.classes_attendance_open = False
+                        st.success(
+                            "ðŸ”’ Classes have been closed. "
+                            "Students can no longer mark attendance."
+                        )
+                        st.rerun()
+
+                else:
+
+                    st.error(
+                        "ðŸ”´ Attendance is CLOSED. Students cannot mark attendance."
+                    )
+
+                    if st.button(
+                        "ðŸ”“ Open Classes",
+                        key="open_classes_button"
+                    ):
+                        st.session_state.classes_attendance_open = True
+                        st.success(
+                            "ðŸ”“ Classes have been opened. "
+                            "Students can now mark attendance."
+                        )
+                        st.rerun()
+
+                st.write("---")
+
+                # ---------------------------------------------------------
+                # TOTAL CLASSES
+                # ---------------------------------------------------------
+
+
+                # ---------------------------------------------------------
+                # TOTAL CLASSES
+                # ---------------------------------------------------------
+
+                st.subheader("ðŸ“š Total Classes")
+
+                # Initialize before creating the widget
+                if "teacher_total_classes" not in st.session_state:
+                    st.session_state.teacher_total_classes = 30
+
+                def increase_teacher_classes():
+                    st.session_state.teacher_total_classes += 1
+
+                def decrease_teacher_classes():
+                    if st.session_state.teacher_total_classes > 0:
+                        st.session_state.teacher_total_classes -= 1
+
+                total_classes = st.number_input(
+                    "Total Number of Classes",
+                    min_value=0,
+                    step=1,
+                    key="teacher_total_classes"
+                )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.button(
+                        "âž• Increase Classes",
+                        key="increase_classes_button",
+                        on_click=increase_teacher_classes
+                    )
+
+                with col2:
+                    st.button(
+                        "âž– Decrease Classes",
+                        key="decrease_classes_button",
+                        on_click=decrease_teacher_classes
+                    )
 
                 # -----------------------------------------------------
                 # SELECT YEAR
@@ -2991,7 +3392,7 @@ else:
                 # -----------------------------------------------------
 
                 if st.button(
-                    "💾 Save Class Setting",
+                    "ðŸ’¾ Save Class Setting",
                     key="save_class_setting"
                 ):
 
@@ -3015,72 +3416,10 @@ else:
                         )
 
 
-                # -----------------------------------------------------
-                # SAVE BUTTON
-                # -----------------------------------------------------
-
-                if st.button(
-                    "💾 Save Class Settings",
-                    type="primary",
-                    key="save_class_settings"
-                ):
-
-                    conn = get_connection()
-
-                    try:
-
-                        cursor = conn.cursor()
-
-                        cursor.execute(
-                            """
-                            INSERT INTO class_schedule
-                            (
-                                year,
-                                month,
-                                total_classes
-                            )
-                            VALUES (?, ?, ?)
-
-                            ON CONFLICT(year, month)
-                            DO UPDATE SET
-                                total_classes =
-                                excluded.total_classes
-                            """,
-                            (
-                                year,
-                                month,
-                                total_classes
-                            )
-                        )
-
-                        conn.commit()
-
-                        st.success(
-                            f"✅ Class settings saved successfully!"
-                        )
-
-                        st.info(
-                            f"📅 {month:02d}/{year} → "
-                            f"{total_classes} total classes"
-                        )
-
-                    except sqlite3.Error as e:
-
-                        conn.rollback()
-
-                        st.error(
-                            f"❌ Database Error: {e}"
-                        )
-
-                    finally:
-
-                        conn.close()                   
-
-
-            elif teacher_menu == "📈 Analytics":
+            elif teacher_menu == "ðŸ“ˆ Analytics":
 
                 st.subheader(
-                    "📈 Attendance Analytics"
+                    "ðŸ“ˆ Attendance Analytics"
                 )
 
                 st.write("---")
@@ -3104,7 +3443,7 @@ else:
                 )
 
                 st.info(
-                    f"📅 {month:02d}/{year} | "
+                    f"ðŸ“… {month:02d}/{year} | "
                     f"Total Classes: **{monthly_classes}**"
                 )
 
@@ -3195,10 +3534,10 @@ else:
             # EXPORT
             # =================================================
 
-            elif teacher_menu == "📥 Export":
+            elif teacher_menu == "ðŸ“¥ Export":
 
                 st.subheader(
-                    "📥 Export Attendance"
+                    "ðŸ“¥ Export Attendance"
                 )
 
                 st.write("---")
@@ -3208,7 +3547,7 @@ else:
                 # =================================================
 
                 st.subheader(
-                    "📅 Select Date Range"
+                    "ðŸ“… Select Date Range"
                 )
 
                 col1, col2 = st.columns(2)
@@ -3236,7 +3575,7 @@ else:
                 if start_date > end_date:
 
                     st.error(
-                        "❌ Start Date cannot be after End Date."
+                        "âŒ Start Date cannot be after End Date."
                     )
 
                 else:
@@ -3310,7 +3649,7 @@ else:
                         st.write("---")
 
                         st.subheader(
-                            "📊 Export Preview"
+                            "ðŸ“Š Export Preview"
                         )
 
                         st.info(
@@ -3350,7 +3689,7 @@ else:
 
                         excel_data = excel_buffer.getvalue()
                         st.download_button(
-                            label="⬇️ Download Attendance CSV",
+                            label="â¬‡ï¸ Download Attendance CSV",
                             data=csv,
                             file_name=(
                                 f"attendance_"
@@ -3363,7 +3702,7 @@ else:
                         )
 
                         st.download_button(
-                            label="📊 Download Attendance Excel",
+                            label="ðŸ“Š Download Attendance Excel",
                             data=excel_data,
                             file_name=(
                                 f"attendance_"
@@ -3388,28 +3727,28 @@ else:
         except sqlite3.Error as e:
 
             st.error(
-                f"❌ Database Error: {e}"
+                f"âŒ Database Error: {e}"
             )
 
         finally:
 
             conn.close()
 
-        # =================================================
-        # TEACHER LOGOUT
-        # =================================================
+        # # =================================================
+        # # TEACHER LOGOUT
+        # # =================================================
 
-        st.write("---")
+        # st.write("---")
 
-        if st.button(
-            "🚪 Teacher Logout",
-            key="teacher_logout"
-        ):
-            st.session_state.teacher_logged_in = False
-            st.session_state.teacher_id = None
-            st.session_state.teacher_name = ""
+        # if st.button(
+        #     "ðŸšª Teacher Logout",
+        #     key="teacher_logout"
+        # ):
+        #     st.session_state.teacher_logged_in = False
+        #     st.session_state.teacher_id = None
+        #     st.session_state.teacher_name = ""
 
-            st.rerun()
+        #     st.rerun()
 
     # =====================================================
     # TEACHER DASHBOARD WITHOUT LOGIN
@@ -3418,7 +3757,7 @@ else:
     elif choice == "Teacher Dashboard":
 
         st.warning(
-            "🔒 Please log in first to access the Teacher Dashboard."
+            "ðŸ”’ Please log in first to access the Teacher Dashboard."
         )
 
         st.info(

@@ -38,3 +38,20 @@ models/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Streamlit secrets
+.streamlit/secrets.toml
+.streamlit/
+
+# Local debugging and broken copies
+app_BROKEN*.py
+app_camera_indentation_error.py
+app_crashed_current_2.py
+app_before*.py
+app_backup*.py
+app_step1*.py
+
+# Local test and database inspection scripts
+test_*.py
+check_*.py
+*_test.py
